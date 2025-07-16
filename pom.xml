@@ -1,0 +1,139 @@
+<!--
+ ~ Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com) All Rights Reserved.
+ ~
+ ~ WSO2 LLC. licenses this file to you under the Apache License,
+ ~ Version 2.0 (the "License"); you may not use this file except
+ ~ in compliance with the License.
+ ~ You may obtain a copy of the License at
+ ~
+ ~    http://www.apache.org/licenses/LICENSE-2.0
+ ~
+ ~ Unless required by applicable law or agreed to in writing,
+ ~ software distributed under the License is distributed on an
+ ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ ~ KIND, either express or implied.  See the License for the
+ ~ specific language governing permissions and limitations
+ ~ under the License.
+ -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.wso2.org.apache.lucene-solr</groupId>
+  <artifactId>wso2-lucene-solr-parent</artifactId>
+  <version>${version}</version>
+  <packaging>pom</packaging>
+  <name>WSO2 Lucene / Solr fork</name>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.ivy</groupId>
+            <artifactId>ivy</artifactId>
+            <version>2.5.0</version>
+          </dependency>
+        </dependencies>
+
+        <executions>
+          <execution>
+            <id>ant-compile</id>
+            <phase>compile</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <taskdef name="ivy" classname="org.apache.ivy.ant.IvyConfigure"
+                         classpathref="maven.plugin.classpath"/>
+                <ant antfile="build.xml" target="compile">
+                  <property name="build.compiler" value="extJavac"/>
+                  <property name="version" value="${project.version}"/>
+                </ant>
+              </target>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>ant-jar</id>
+            <phase>package</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <taskdef name="ivy" classname="org.apache.ivy.ant.IvyConfigure"
+                         classpathref="maven.plugin.classpath"/>
+                <ant antfile="build.xml" target="jar">
+                  <property name="build.compiler" value="extJavac"/>
+                  <property name="version" value="${project.version}"/>
+                </ant>
+              </target>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>ant-test</id>
+            <phase>test</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <skip>${maven.test.skip}</skip>
+              <target>
+                <taskdef name="ivy" classname="org.apache.ivy.ant.IvyConfigure"
+                         classpathref="maven.plugin.classpath"/>
+                <ant antfile="build.xml" target="test">
+                  <property name="build.compiler" value="extJavac"/>
+                  <property name="version" value="${project.version}"/>
+                </ant>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.1.1</version>
+
+        <executions>
+          <execution>
+            <id>install-solr-core</id>
+            <phase>install</phase>
+            <goals><goal>install-file</goal></goals>
+            <configuration>
+              <file>${project.basedir}/solr/build/solr-core/solr-core-${version}.jar</file>
+              <groupId>org.wso2.org.apache.solr</groupId>
+              <artifactId>solr-core</artifactId>
+              <version>${version}</version>
+              <packaging>jar</packaging>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-solr-solrj</id>
+            <phase>install</phase>
+            <goals><goal>install-file</goal></goals>
+            <configuration>
+              <file>${project.basedir}/solr/build/solr-solrj/solr-solrj-${version}.jar</file>
+              <groupId>org.wso2.org.apache.solr</groupId>
+              <artifactId>solr-solrj</artifactId>
+              <version>${version}</version>
+              <packaging>jar</packaging>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <properties>
+    <version>8.11.4-wso2v1</version>
+  </properties>
+</project>
