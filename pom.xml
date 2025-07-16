@@ -56,6 +56,7 @@
                 <ant antfile="build.xml" target="compile">
                   <property name="build.compiler" value="extJavac"/>
                   <property name="version" value="${project.version}"/>
+                  <property name="ivy_install_path" location="${project.build.directory}" />
                 </ant>
               </target>
             </configuration>
@@ -72,6 +73,7 @@
                 <ant antfile="build.xml" target="jar">
                   <property name="build.compiler" value="extJavac"/>
                   <property name="version" value="${project.version}"/>
+                  <property name="ivy_install_path" location="${project.build.directory}" />
                 </ant>
               </target>
             </configuration>
@@ -89,6 +91,7 @@
                 <ant antfile="build.xml" target="test">
                   <property name="build.compiler" value="extJavac"/>
                   <property name="version" value="${project.version}"/>
+                  <property name="ivy_install_path" location="${project.build.directory}" />
                 </ant>
               </target>
             </configuration>
