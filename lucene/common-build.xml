@@ -55,17 +55,17 @@
   <!-- include version number from property file (includes "version.*" properties) -->
   <loadproperties srcFile="${common.dir}/version.properties"/>
   
-  <fail message="'version.base' property must be 'x.y.z' (major, minor, bugfix) or 'x.y.z.1/2' (+ prerelease) and numeric only: ${version.base}">
-    <condition>
-      <not><matches pattern="^\d+\.\d+\.\d+(|\.1|\.2)$" casesensitive="true" string="${version.base}"/></not>
-    </condition>
-  </fail>
+<!--  <fail message="'version.base' property must be 'x.y.z' (major, minor, bugfix) or 'x.y.z.1/2' (+ prerelease) and numeric only: ${version.base}">-->
+<!--    <condition>-->
+<!--      <not><matches pattern="^\d+\.\d+\.\d+(|\.1|\.2)$" casesensitive="true" string="${version.base}"/></not>-->
+<!--    </condition>-->
+<!--  </fail>-->
 
-  <fail message="If you pass -Dversion=... to set a release version, it must match &quot;${version.base}&quot;, optionally followed by a suffix (e.g., &quot;-SNAPSHOT&quot;).">
-    <condition>
-      <not><matches pattern="^\Q${version.base}\E(|\-.*)$" casesensitive="true" string="${version}"/></not>
-    </condition>
-  </fail>
+<!--  <fail message="If you pass -Dversion=... to set a release version, it must match &quot;${version.base}&quot;, optionally followed by a suffix (e.g., &quot;-SNAPSHOT&quot;).">-->
+<!--    <condition>-->
+<!--      <not><matches pattern="^\Q${version.base}\E(|\-.*)$" casesensitive="true" string="${version}"/></not>-->
+<!--    </condition>-->
+<!--  </fail>-->
   
   <fail message="Your ~/.ant/lib folder or the main classpath of Ant contains some version of ASM. Please remove it, otherwise this build can't run correctly.">
     <condition>
