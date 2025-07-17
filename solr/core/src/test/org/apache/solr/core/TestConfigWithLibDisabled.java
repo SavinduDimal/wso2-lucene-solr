@@ -20,16 +20,12 @@ import static org.apache.solr.core.SolrConfig.LIB_ENABLED_SYSPROP;
 import static org.hamcrest.core.StringContains.containsString;
 
 import java.io.IOException;
+
 import org.apache.solr.SolrTestCaseJ4;
+import org.apache.solr.core.SolrResourceLoader;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-// TODO - replace 'initCore' usage and merge with TestConfig
-/**
- * Unit test verifying that "lib" tags are quietly ignored when not explicitly enabled.
- *
- * <p>Based on code from {@link TestConfig}.
- */
 public class TestConfigWithLibDisabled extends SolrTestCaseJ4 {
 
   @BeforeClass
@@ -38,27 +34,27 @@ public class TestConfigWithLibDisabled extends SolrTestCaseJ4 {
     initCore("solrconfig-test-misc.xml", "schema-reversed.xml");
   }
 
-  // solrconfig-test-misc has lib tags referencing various files
-  // This test ensures that none of those files are loadable when
-  // <lib> tags are disabled
   @Test
   public void testLibFilesShouldntBeVisible() throws IOException {
     SolrResourceLoader loader = h.getCore().getResourceLoader();
-    String[] filesReferencedByLib =
-            new String[] {
-                    "empty-file-a1.txt",
-                    "empty-file-a2.txt",
-                    "empty-file-b1.txt",
-                    "empty-file-b2.txt",
-                    "empty-file-c1.txt"
-            };
-    for (String f : filesReferencedByLib) {
-      final var e =
-              expectThrows(
-                      SolrResourceNotFoundException.class,
-                      () -> {
-                        loader.openResource(f);
-                      });
+    String[] filesReferencedByLib = new String[] {
+        "empty-file-a1.txt",
+        "empty-file-a2.txt",
+        "empty-file-b1.txt",
+        "empty-file-b2.txt",
+        "empty-file-c1.txt"
+    };
+
+    for (final String f : filesReferencedByLib) {
+      Exception e = expectThrows(
+          Exception.class,
+          new ThrowingRunnable() {
+            @Override
+            public void run() throws Throwable {
+              loader.openResource(f);
+            }
+          }
+      );
       assertThat(e.getMessage(), containsString("Can't find resource"));
       assertThat(e.getMessage(), containsString(f));
     }
