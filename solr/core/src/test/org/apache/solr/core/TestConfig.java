@@ -22,6 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.Collections;
 import java.util.List;
 
+import static org.apache.solr.core.SolrConfig.LIB_ENABLED_SYSPROP;
+
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.TieredMergePolicy;
@@ -41,6 +43,7 @@ public class TestConfig extends SolrTestCaseJ4 {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    System.setProperty(LIB_ENABLED_SYSPROP, "true");
     initCore("solrconfig-test-misc.xml","schema-reversed.xml");
   }
 

@@ -59,6 +59,7 @@ import org.apache.solr.common.MapSerializable;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.IOUtils;
+import org.apache.solr.common.util.StrUtils;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.pkg.PackageListeners;
 import org.apache.solr.pkg.PackageLoader;
@@ -827,6 +828,7 @@ public class SolrConfig implements MapSerializable {
         "Multiple plugins configured for type: " + type);
   }
 
+  public static final String LIB_ENABLED_SYSPROP = "solr.config.lib.enabled";
   private void initLibs(SolrResourceLoader loader, boolean isConfigsetTrusted) {
     // TODO Want to remove SolrResourceLoader.getInstancePath; it can be on a Standalone subclass.
     //  For Zk subclass, it's needed for the time being as well.  We could remove that one if we remove two things
@@ -843,6 +845,7 @@ public class SolrConfig implements MapSerializable {
       }
     }
 
+    boolean libDirectiveAllowed = getPropertyAsBool(LIB_ENABLED_SYSPROP, false);
     List<ConfigNode> nodes = root.getAll("lib");
     if (nodes != null && nodes.size() > 0) {
       if (!isConfigsetTrusted) {
@@ -852,32 +855,12 @@ public class SolrConfig implements MapSerializable {
             + " after enabling authentication and authorization.");
       }
 
-      for (int i = 0; i < nodes.size(); i++) {
-        ConfigNode node = nodes.get(i);
-        String baseDir = node.attr("dir");
-        String path = node.attr(PATH);
-        if (null != baseDir) {
-          // :TODO: add support for a simpler 'glob' mutually exclusive of regex
-          Path dir = instancePath.resolve(baseDir);
-          String regex = node.attr("regex");
-          try {
-            if (regex == null)
-              urls.addAll(SolrResourceLoader.getURLs(dir));
-            else
-              urls.addAll(SolrResourceLoader.getFilteredURLs(dir, regex));
-          } catch (IOException e) {
-            log.warn("Couldn't add files from {} filtered by {} to classpath: {}", dir, regex, e);
-          }
-        } else if (null != path) {
-          final Path dir = instancePath.resolve(path);
-          try {
-            urls.add(dir.toUri().toURL());
-          } catch (MalformedURLException e) {
-            log.warn("Couldn't add file {} to classpath: {}", dir, e);
-          }
-        } else {
-          throw new RuntimeException("lib: missing mandatory attributes: 'dir' or 'path'");
-        }
+      if (!libDirectiveAllowed) {
+        log.warn(
+                "Configset references one or more <lib/> directives, but <lib/> usage is disabled on this Solr node.  Either remove all <lib/> tags from the relevant configset, or enable use of this feature by setting '{}=true'",
+                LIB_ENABLED_SYSPROP);
+      } else {
+        urls.addAll(processLibDirectives(nodes, instancePath));
       }
     }
 
@@ -885,6 +868,47 @@ public class SolrConfig implements MapSerializable {
       loader.addToClassLoader(urls);
       loader.reloadLuceneSPI();
     }
+  }
+
+  /** Get property as boolean, or default value */
+  private static Boolean getPropertyAsBool(String key, Boolean defaultValue) {
+
+    String value = System.getProperty(key);
+    if (value == null) {
+      return defaultValue;
+    }
+    return StrUtils.parseBool(value);
+  }
+
+  private List<URL> processLibDirectives(List<ConfigNode> nodes, Path instancePath) {
+
+    final ArrayList<URL> urls = new ArrayList<URL>();
+    for (int i = 0; i < nodes.size(); i++) {
+      ConfigNode node = nodes.get(i);
+      String baseDir = node.attr("dir");
+      String path = node.attr(PATH);
+      if (null != baseDir) {
+        // :TODO: add support for a simpler 'glob' mutually exclusive of regex
+        Path dir = instancePath.resolve(baseDir);
+        String regex = node.attr("regex");
+        try {
+          if (regex == null) urls.addAll(SolrResourceLoader.getURLs(dir));
+          else urls.addAll(SolrResourceLoader.getFilteredURLs(dir, regex));
+        } catch (IOException e) {
+          log.warn("Couldn't add files from {} filtered by {} to classpath: {}", dir, regex, e);
+        }
+      } else if (null != path) {
+        final Path dir = instancePath.resolve(path);
+        try {
+          urls.add(dir.toUri().toURL());
+        } catch (MalformedURLException e) {
+          log.warn("Couldn't add file {} to classpath: {}", dir, e);
+        }
+      } else {
+        throw new RuntimeException("lib: missing mandatory attributes: 'dir' or 'path'");
+      }
+    }
+    return urls;
   }
 
   public int getMultipartUploadLimitKB() {

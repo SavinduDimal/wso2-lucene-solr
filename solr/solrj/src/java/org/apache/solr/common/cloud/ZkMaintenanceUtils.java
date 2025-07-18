@@ -156,7 +156,13 @@ public class ZkMaintenanceUtils {
       dst = normalizeDest(src, dst, srcIsZk, dstIsZk);
     }
     byte[] data = zkClient.getData(src, null, null, true);
-    Path filename = Paths.get(dst);
+    Path filename = Paths.get(dst).normalize();
+    // Prevent unsafe paths (e.g., absolute paths, traversal, Windows backslashes)
+    String pathStr = filename.toString();
+    if (pathStr.contains("..") || pathStr.contains("\\") || pathStr.startsWith(".")) {
+        log.warn("Skipping writing file [{}] due to unsafe path segment", filename);
+        return;
+    }
     Files.createDirectories(filename.getParent());
     log.info("Writing file {}", filename);
     Files.write(filename, data);
@@ -334,8 +340,16 @@ public class ZkMaintenanceUtils {
   private static int copyDataDown(SolrZkClient zkClient, String zkPath, File file) throws IOException, KeeperException, InterruptedException {
     byte[] data = zkClient.getData(zkPath, null, null, true);
     if (data != null && data.length > 0) { // There are apparently basically empty ZNodes.
-      log.info("Writing file {}", file);
-      Files.write(file.toPath(), data);
+      Path resolvedFile = file.toPath().toAbsolutePath().normalize();
+      Path parentDir = resolvedFile.getParent();
+      // Prevent writing outside the intended base directory
+      if (resolvedFile.toString().contains("..") || resolvedFile.toString().contains("\\")) {
+        log.warn("Skipping writing file [{}] due to unsafe path segment", resolvedFile);
+        return 0;
+      }
+      Files.createDirectories(parentDir);
+      log.info("Writing file {}", resolvedFile);
+      Files.write(resolvedFile, data);
       return data.length;
     }
     return 0;

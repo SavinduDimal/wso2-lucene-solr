@@ -338,7 +338,16 @@ public class BackupManager {
 
   private void uploadToZk(SolrZkClient zkClient, URI sourceDir, String destZkPath) throws IOException {
     for (String file : repository.listAll(sourceDir)) {
+      if (file.contains("..") || file.contains("\\") || file.startsWith("/")) {
+        log.warn("Skipping configset file {} as it contains potentially unsafe path segments", file);
+        continue;
+      }
       String zkNodePath = destZkPath + "/" + file;
+      String normalizedZkNodePath = zkNodePath.replaceAll("/{2,}", "/");
+      if (!normalizedZkNodePath.startsWith(destZkPath + "/")) {
+          log.warn("Skipping file {} as its zkNodePath [{}] escapes the intended destination [{}]", file, normalizedZkNodePath, destZkPath);
+          continue;
+      }
       URI path = repository.resolve(sourceDir, file);
       PathType t = repository.getPathType(path);
       switch (t) {
